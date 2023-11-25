@@ -210,6 +210,7 @@ Objects.prototype = {
 
 			//[jscastro] added method to create a bounding box and a shadow box
 			obj.drawBoundingBox = function () {
+				return;
 				//let's create 2 wireframes, one for the object and one to project on the floor position
 				let bb = obj.box3();
 				//create the group to return

@@ -263,7 +263,7 @@ Threebox.prototype = {
 						//if not selected yet, select it
 						if (!this.selectedObject) {
 							this.selectedObject = nearestObject;
-							this.selectedObject.selected = true;
+							// this.selectedObject.selected = true;
 						}
 						else if (this.selectedObject.uuid != nearestObject.uuid) {
 							//it's a different object, restore the previous and select the new one
@@ -278,8 +278,8 @@ Threebox.prototype = {
 						}
 
 						// fire the Wireframed event to notify UI status change
-						this.selectedObject.dispatchEvent({ type: 'Wireframed', detail: this.selectedObject });
-						this.selectedObject.dispatchEvent({ type: 'IsPlayingChanged', detail: this.selectedObject });
+						this.selectedObject.dispatchEvent({ type: 'click', detail: this.selectedObject });
+						// this.selectedObject.dispatchEvent({ type: 'IsPlayingChanged', detail: this.selectedObject });
 
 						this.repaint = true;
 						e.preventDefault();
@@ -388,6 +388,7 @@ Threebox.prototype = {
 				if (intersectionExists) {
 					let nearestObject = Threebox.prototype.findParent3DObject(intersects[0]);
 					if (nearestObject) {
+						nearestObject.dispatchEvent({ type: 'hover', detail: nearestObject });
 						this.outFeature(this.overedFeature);
 						this.getCanvasContainer().style.cursor = 'pointer';
 						if (!this.selectedObject || nearestObject.uuid != this.selectedObject.uuid) {
@@ -406,7 +407,10 @@ Threebox.prototype = {
 				}
 				else {
 					//clean the object overed
-					if (this.overedObject) { this.outObject(); }
+					if (this.overedObject) { 
+						this.overedObject.dispatchEvent({ type: 'unhover', detail: this.overedObject });
+						this.outObject(); 
+					}
 					//now let's check the extrusion layer objects
 					let features = [];
 					if (map.tb.enableSelectingFeatures) {

@@ -4,6 +4,7 @@
 */
 const THREE = require('../three.js');
 const utils = require("../utils/utils.js");
+const Timer = require("./Timer.js");
 
 function AnimationManager(map) {
 
@@ -161,21 +162,35 @@ AnimationManager.prototype = {
 			return this;
 		}
 
+		obj.pause = function () {
+			obj.isRunning = false;
+		}
+
+		obj.unPause = function () {
+			obj.isRunning = true;
+			obj.clock.reset();
+		}
+
 		obj.followPath = function (options, cb) {
 
 			let entry = {
 				type: 'followPath',
 				parameters: utils._validate(options, defaults.followPath)
 			};
+			obj.clock = new Timer();
+			obj.isRunning = true;
 
 			utils.extend(
 				entry.parameters,
 				{
 					pathCurve: new THREE.CatmullRomCurve3(
-						utils.lnglatsToWorld(options.path)
+						utils.lnglatsToWorld(options.path),
+						false,
+						"catmullrom",
+						0.1
 					),
-					start: Date.now(),
-					expiration: Date.now() + entry.parameters.duration,
+					start: obj.clock._startTime, // Date.now(),
+					expiration: obj.clock._startTime + entry.parameters.duration, // Date.now() + entry.parameters.duration,
 					cb: cb
 				}
 			);
@@ -374,7 +389,7 @@ AnimationManager.prototype = {
 				let options = item.parameters;
 
 				// if an animation is past its expiration date, cull it
-				if (!options.expiration) {
+				if (!options.expiration && object.isRunning) {
 					// console.log('culled')
 
 					object.animationQueue.splice(i, 1);
@@ -386,9 +401,9 @@ AnimationManager.prototype = {
 				}
 
 				//if finished, jump to end state and flag animation entry for removal next time around. Execute callback if there is one
-				let expiring = now >= options.expiration;
+				let expiring = object.clock.getElapsed()*1000 + options.start  >= options.expiration;
 
-				if (expiring) {
+				if (expiring && object.isRunning) {
 					options.expiration = false;
 					if (item.type === 'playDefault') {
 						object.stop();
@@ -400,7 +415,7 @@ AnimationManager.prototype = {
 
 				else {
 
-					let timeProgress = (now - options.start) / options.duration;
+					let timeProgress = object.clock.getElapsed() * 1000 / options.duration;
 
 					if (item.type === 'set') {
 
@@ -424,6 +439,10 @@ AnimationManager.prototype = {
 					}
 
 					if (item.type === 'followPath') {
+
+						if(object.isRunning) {
+							object.clock.update();
+						}
 
 						let position = options.pathCurve.getPointAt(timeProgress);
 						let objectState = { worldCoordinates: position };
