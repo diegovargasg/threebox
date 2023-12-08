@@ -1663,7 +1663,7 @@ AnimationManager.prototype = {
 						utils.lnglatsToWorld(options.path),
 						false,
 						"catmullrom",
-						0.1
+						0
 					),
 					start: obj.clock._startTime, // Date.now(),
 					expiration: obj.clock._startTime + entry.parameters.duration, // Date.now() + entry.parameters.duration,

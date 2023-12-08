@@ -3,6 +3,7 @@
 	<title>Animated truck</title>
 	<script src="../dist/threebox.js" type="text/javascript"></script>
 	<link href="../dist/threebox.css" rel="stylesheet" />
+	<script src="https://rawgithub.com/mrdoob/three.js/r104/examples/js/utils/BufferGeometryUtils.js"></script>
 	<script src="config.js"></script>
 	<link href="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.css" rel="stylesheet">
 	<script src="https://api.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.js"></script>
@@ -41,12 +42,79 @@
 
 		function pauseAnimation() {
 			console.log("PAUSE")
-			truck.pause();
+			//truck.pause();
 		}
 
 		function continueAnimation() {
 			console.log("CONTINUE");
-			truck.unPause()
+			// truck.unPause();
+
+			// const group = new THREE.Group();
+			// group.updateMatrixWorld(true);
+			// console.log(group)
+
+			const truckSize = truck.getSize();
+			const truck2Size = truck2.getSize();
+
+			const truckGeometry = new THREE.BoxGeometry(truckSize.x, truckSize.y, truckSize.z);
+			const truck2Geometry = new THREE.BoxGeometry(truck2Size.x, truck2Size.y, truck2Size.z);
+
+			const mesh1 = new THREE.Mesh(truckGeometry, new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+			const mesh2 = new THREE.Mesh(truck2Geometry, new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+
+			const mergedGeometry = new THREE.BoxGeometry();
+			mergedGeometry.merge(truckGeometry, mesh1.matrix);
+			mergedGeometry.merge(truck2Geometry, mesh2.matrix);
+
+			const mergedMesh = new THREE.Mesh(mergedGeometry, new THREE.MeshBasicMaterial({ color: 0xffff00 }));
+
+			const tmp = window.tb.Object3D({ obj: mergedMesh, scale: 1, units: "meters", bbox: false, rotation: { x: 0, y: 0, z: 0 }}).setCoords(origin);
+			window.tb.add(tmp);
+
+			// boxOjb = window.tb.Object3D({ obj: mesh1, scale: 1, units: "meters", bbox: false, rotation: { x: 0, y: 0, z: 0 }}).setCoords(origin);
+			// boxOjb2 = window.tb.Object3D({ obj: mesh2, scale: 1, units: "meters", bbox: false, rotation: { x: 0, y: 0, z: 0 }}).setCoords(origin2);
+
+
+
+			// let boxModel = new THREE.Box3Helper(bb, Objects.prototype._defaults.colors.yellow);
+			
+// console.log(group);
+			//window.tb.add(boxOjb);
+
+			// const groupBoundingBox = new THREE.Box3().setFromObject(group);
+			// const boxHelper = new THREE.Box3Helper(groupBoundingBox, 0xffff00);
+
+			// truckGeometry.toBufferGeometry();
+			// Create a buffer geometry from each geometry
+			// const bufferGeometry1 = new THREE.BufferGeometry().fromGeometry(truckGeometry);
+			// const bufferGeometry2 = new THREE.BufferGeometry().fromGeometry(truck2Geometry);
+
+			// const mergedGeometry = THREE.BufferGeometryUtils.mergeBufferGeometries([bufferGeometry1, bufferGeometry2]);
+
+			// const redMaterial = new THREE.MeshPhongMaterial({ color: 0x660000, opacity: 0.5, transparent: true });
+			// const boxMesh = new THREE.Mesh(mergedGeometry, redMaterial);
+			// boxOjb = window.tb.Object3D({ obj: boxMesh, scale: 1, units: "meters", bbox: false, rotation: { x: 0, y: 0, z: 0 }}).setCoords(origin);
+			// window.tb.add(boxOjb);
+/*
+			const redMaterial = new THREE.MeshPhongMaterial({ color: 0x660000, opacity: 0.5, transparent: true });
+			const box3 = truck.box3();
+			box3.expandByObject(truck);
+
+			const box3Size = new THREE.Vector3();
+			const size = box3.getSize(box3Size); 
+			
+			// const boxSize = box3.getSize(box3Size);
+			
+			// console.log(boxSize)
+
+			// const box3Size = truck.getSize();
+			const boxGeometry = new THREE.BoxGeometry(size.x, size.y, size.z);
+			const boxMesh = new THREE.Mesh(boxGeometry, redMaterial);
+			boxOjb = window.tb.Object3D({ obj: boxMesh, scale: 1, units: "meters", bbox: false, rotation: { x: 0, y: 0, z: 0 }}).setCoords(origin);
+
+			// boxGeometry.expandByObject(truck);
+
+			window.tb.add(boxOjb);*/
 		}
 
 		function followAuto() {
@@ -64,9 +132,10 @@
 
 		mapboxgl.accessToken = config.accessToken;
 
-		var origin = [-122.4340, 37.7353];
+		var origin = [13.401095791729222, 52.51906775178806];
+		var origin2 = [-122.43369451186717, 37.73498937816123];
 		var destination, line;
-		var truck;
+		var truck, boxOjb, boxOjb2, truck2;
 
 		document.getElementById("pauseBtn").addEventListener("click", pauseAnimation);
 		document.getElementById("continueBtn").addEventListener("click", continueAnimation);
@@ -125,9 +194,12 @@
 						tb.loadObj(options, function (model) {
 
 							truck = model.setCoords(origin)
-							truck.addTooltip(generateToolTip(), true);
+							// truck.addTooltip(generateToolTip(), true);
 							truck.addEventListener('click', (e) => {
 								console.log(e);
+								
+
+								// e.detail.expandByObject(geo);
 							});
 							truck.addEventListener('hover', (e) => {
 								if(e.detail.isRunning) {
@@ -141,8 +213,29 @@
 								}
 							});
 							tb.add(truck);
-						})
+						});
 
+						tb.loadObj(options, function (model) {
+							// Second truck
+							truck2 = model.setCoords(origin2)
+							// truck.addTooltip(generateToolTip(), true);
+							truck2.addEventListener('click', (e) => {
+								console.log(e);
+								// e.detail.expandByObject(geo);
+							});
+							truck2.addEventListener('hover', (e) => {
+								if(e.detail.isRunning) {
+									e.detail.pause();
+								}
+							});
+
+							truck2.addEventListener('unhover', (e) => {
+								if(e.detail.isRunning === false) { 
+									e.detail.unPause();
+								}
+							});
+							//tb.add(truck2);
+						});
 					},
 
 					render: function (gl, matrix) {
@@ -151,6 +244,7 @@
 			});
 		})
 		.on('click', function (e) {
+			console.log(e)
 			var pt = [e.lngLat.lng, e.lngLat.lat];
 			travelPath(pt);
 		})
@@ -187,14 +281,14 @@
 				);
 
 				// set up geometry for a line to be added to map, lofting it up a bit for *style*
-				var lineGeometry = options.path
-					.map(function (coordinate) {
-						return coordinate.concat([15])
-					})
+				// var lineGeometry = options.path
+				// 	.map(function (coordinate) {
+				// 		return coordinate.concat([15])
+				// 	})
 
 				// create and add line object
 				line = tb.line({
-					geometry: lineGeometry,
+					geometry: options.path,
 					width: 5,
 					color: 'steelblue'
 				})
